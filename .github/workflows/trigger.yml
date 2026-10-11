@@ -13,10 +13,28 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Dispatch update workflow
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run update.yml --ref main \
-            -f no_verify=false
-          echo "已触发 update.yml"
+          set +e
+          {
+            echo "gh version:"
+            gh --version
+            echo "--- list workflows ---"
+            gh workflow list --all -R "$GITHUB_REPOSITORY"
+            echo "--- dispatch ---"
+            gh workflow run update.yml --ref main -R "$GITHUB_REPOSITORY"
+            echo "dispatch exit: $?"
+          } > TRIGGER_REPORT.txt 2>&1
+          cat TRIGGER_REPORT.txt
+
+      - name: Commit report
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add TRIGGER_REPORT.txt
+          git commit -m "test: trigger 诊断报告" || echo "无变化"
+          git push || echo "push 失败"
