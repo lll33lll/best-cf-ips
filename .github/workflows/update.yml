@@ -2,8 +2,9 @@ name: Mirror Best CF IPs
 
 on:
   schedule:
-    # 每 30 分钟检查一次（上游每 6 小时更新，这里高频拍，变更即跟进）
-    - cron: "*/30 * * * *"
+    # 每 5 小时检查一次（UTC 0/5/10/15/20 点 37 分）
+    # 上游每 6 小时更新，5 小时拍一次足以覆盖，且避开刚更新的时间点
+    - cron: "37 */5 * * *"
   workflow_dispatch:
 
 permissions:
