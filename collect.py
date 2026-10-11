@@ -3,10 +3,10 @@
 """Cloudflare 优选 IP 聚合工具 —— 复刻 LancelotRar/best-cf-ips 的数据层。
 
 流程：
-  1. 拉取多个上游源（纯文本 / HTML 表格 / CSV）
-  2. 解析出 (ip, port) 对，去重
+  1. 拉取多个上游源（纯文本 / HTML 表格）
+  2. 解析出 (ip, port, cc) 三元组，去重
   3. TCP 443 存活验证
-  4. 地理标注：上游标签继承 > GeoLite2 查库兜底
+  4. 地理标注：实测源标签 > 上游标签继承 > GeoLite2 查库兜底
   5. 排序后输出分档文件
 
 产物：
@@ -16,8 +16,7 @@
 用法：
   python collect.py                  # 全跑
   python collect.py --no-verify      # 跳过 TCP 存活验证（快速预览）
-  python collect.py --geo path.mmdb  # 指定 GeoLite2 库
-  python collect.py --max 100        # 只取前 N（快速预览）
+  python collect.py --geo ""         # 不加载 GeoLite2
 """
 import argparse
 import re
@@ -36,7 +35,15 @@ CST = timezone(timedelta(hours=8))
 
 # ============ 上游数据源 ============
 # kind: text 纯文本 / html HTML 表格
+# trusted_cc=True：该源的 #CC 标签视为实测结果，优先级最高（不被覆盖）
 SOURCES = [
+    # LancelotRar 的实测扫描结果（colo 判定，带真 #CC 标签）
+    {"name": "LancelotRar top400",
+     "url": "https://raw.githubusercontent.com/LancelotRar/best-cf-ips/main/best-cf-ip-scanned-top400.txt",
+     "kind": "text", "trusted_cc": True},
+    {"name": "LancelotRar collected",
+     "url": "https://raw.githubusercontent.com/LancelotRar/best-cf-ips/main/best-cf-ip-collected.txt",
+     "kind": "text", "trusted_cc": True},
     {"name": "cmliu ct",   "url": "https://cf.090227.xyz/ct?ips=80",
      "kind": "text", "carriers": ["电信"]},
     {"name": "cmliu cu",   "url": "https://cf.090227.xyz/cu?ips=80",
@@ -118,23 +125,28 @@ def run(no_verify: bool, geo_path: str):
             print(f"[geo] 加载失败，跳过查库：{e}")
 
     # 1. 采集
-    pool = {}          # ip -> {"port":.., "cc":.., "src":set()}
+    pool = {}          # ip -> {"port":.., "cc":.., "cc_trusted":bool, "src":set()}
     ok_src = 0
     for s in SOURCES:
         try:
             txt = fetch(s["url"])
             rows = extract(txt)
+            trusted = s.get("trusted_cc", False)
             for ip, port, cc in rows:
                 if port != 443:
                     continue
-                e = pool.setdefault(ip, {"port": port, "cc": "", "src": set()})
+                e = pool.setdefault(ip, {"port": port, "cc": "", "cc_trusted": False, "src": set()})
                 e["src"].add(s["name"])
-                if cc and not e["cc"]:
-                    e["cc"] = cc
+                # 标签优先级：实测源(trusted) > 已有标签 > 首个可用标签
+                if cc:
+                    if trusted and not e["cc_trusted"]:
+                        e["cc"], e["cc_trusted"] = cc, True
+                    elif not e["cc_trusted"] and not e["cc"]:
+                        e["cc"] = cc
             ok_src += 1
-            print(f"[src] {s['name']:14} {len(rows):5} 行")
+            print(f"[src] {s['name']:20} {len(rows):5} 行")
         except Exception as e:
-            print(f"[src] {s['name']:14} 失败：{e}")
+            print(f"[src] {s['name']:20} 失败：{e}")
         time.sleep(0.3)
 
     print(f"[src] 可用 {ok_src}/{len(SOURCES)}，去重后 {len(pool)} 个 IP")
@@ -150,7 +162,7 @@ def run(no_verify: bool, geo_path: str):
         ips = [ip for ip, ok in zip(ips, flags) if ok]
         print(f"[verify] 存活 {len(ips)}")
 
-    # 3. 地理标注
+    # 3. 地理标注（已有标签的保持不动，空标签才查库）
     for ip in ips:
         pool[ip]["cc"] = geo_lib.lookup_cc(reader, ip, pool[ip]["cc"])
     if reader:
