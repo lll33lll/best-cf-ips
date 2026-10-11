@@ -1,0 +1,78 @@
+name: Update Best CF IPs
+
+on:
+  schedule:
+    # 每 6 小时（UTC 0/6/12/18 点后 17 分）
+    - cron: "17 0,6,12,18 * * *"
+  workflow_dispatch:
+    inputs:
+      no_verify:
+        description: "跳过 TCP 存活验证"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-cf-ips
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Get week tag
+        id: week
+        run: echo "tag=$(date -u +%Y-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache GeoLite2
+        id: geo-cache
+        uses: actions/cache@v4
+        with:
+          path: geo/GeoLite2-City.mmdb
+          key: geolite2-city-${{ steps.week.outputs.tag }}
+          restore-keys: |
+            geolite2-city-
+
+      - name: Fetch GeoLite2
+        run: |
+          mkdir -p geo
+          if [ -f geo/GeoLite2-City.mmdb ]; then
+            echo "已从缓存取得 GeoLite2"
+          else
+            curl -sL --retry 5 --retry-all-errors \
+              -o geo/GeoLite2-City.mmdb.gz \
+              "https://raw.githubusercontent.com/wp-statistics/GeoLite2-City/master/GeoLite2-City.mmdb.gz"
+            gunzip -f geo/GeoLite2-City.mmdb.gz
+          fi
+          ls -la geo/
+
+      - name: Collect
+        run: |
+          if [ "${{ inputs.no_verify }}" = "true" ]; then
+            python collect.py --no-verify
+          else
+            python collect.py
+          fi
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add best-cf-ip-*.txt
+          if git diff --cached --quiet; then
+            echo "无变化"
+          else
+            git commit -m "chore: update best cf ips $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
