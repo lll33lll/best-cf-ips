@@ -1,25 +1,20 @@
-name: Update Best CF IPs
+name: Mirror Best CF IPs
 
 on:
   schedule:
-    # 每 6 小时（UTC 0/6/12/18 点后 17 分）
-    - cron: "17 0,6,12,18 * * *"
+    # 每 30 分钟检查一次（上游每 6 小时更新，这里高频拍，变更即跟进）
+    - cron: "*/30 * * * *"
   workflow_dispatch:
-    inputs:
-      no_verify:
-        description: "跳过 TCP 存活验证"
-        type: boolean
-        default: false
 
 permissions:
   contents: write
 
 concurrency:
-  group: update-cf-ips
+  group: mirror-cf-ips
   cancel-in-progress: false
 
 jobs:
-  update:
+  mirror:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,42 +23,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install deps
-        run: pip install -r requirements.txt
-
-      - name: Get week tag
-        id: week
-        run: echo "tag=$(date -u +%Y-W%V)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache GeoLite2
-        id: geo-cache
-        uses: actions/cache@v4
-        with:
-          path: geo/GeoLite2-City.mmdb
-          key: geolite2-city-${{ steps.week.outputs.tag }}
-          restore-keys: |
-            geolite2-city-
-
-      - name: Fetch GeoLite2
-        run: |
-          mkdir -p geo
-          if [ -f geo/GeoLite2-City.mmdb ]; then
-            echo "已从缓存取得 GeoLite2"
-          else
-            curl -sL --retry 5 --retry-all-errors \
-              -o geo/GeoLite2-City.mmdb.gz \
-              "https://raw.githubusercontent.com/wp-statistics/GeoLite2-City/master/GeoLite2-City.mmdb.gz"
-            gunzip -f geo/GeoLite2-City.mmdb.gz
-          fi
-          ls -la geo/
-
-      - name: Collect
-        run: |
-          if [ "${{ inputs.no_verify }}" = "true" ]; then
-            python collect.py --no-verify
-          else
-            python collect.py
-          fi
+      - name: Mirror upstream
+        run: python mirror.py
 
       - name: Commit
         run: |
@@ -74,8 +35,8 @@ jobs:
             echo "无变化"
             exit 0
           fi
-          git commit -m "chore: update best cf ips $(date -u +'%Y-%m-%d %H:%M UTC')"
-          # 与远端可能存在的并发提交对齐，避免 push 被 rejected
+          git commit -m "mirror: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # 与远端并发提交对齐，避免 push 被 rejected
           for i in 1 2 3; do
             if git pull --rebase --autostash origin main && git push; then
               echo "推送成功（第 $i 次尝试）"
