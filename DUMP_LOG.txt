@@ -1,0 +1,67 @@
+=== runs ===
+completed	failure	Update Best CF IPs	Update Best CF IPs	main	workflow_dispatch	38134116706	23s	2026-10-11T11:02:32Z
+=== log of run 38134116706 ===
+update	Commit	﻿2026-10-11T11:02:52.7417597Z ##[group]Run git config user.name  "github-actions[bot]"
+update	Commit	2026-10-11T11:02:52.7418167Z ^[[36;1mgit config user.name  "github-actions[bot]"^[[0m
+update	Commit	2026-10-11T11:02:52.7418667Z ^[[36;1mgit config user.email "github-actions[bot]@users.noreply.github.com"^[[0m
+update	Commit	2026-10-11T11:02:52.7419151Z ^[[36;1mgit add best-cf-ip-*.txt^[[0m
+update	Commit	2026-10-11T11:02:52.7419533Z ^[[36;1mif git diff --cached --quiet; then^[[0m
+update	Commit	2026-10-11T11:02:52.7419905Z ^[[36;1m  echo "无变化"^[[0m
+update	Commit	2026-10-11T11:02:52.7420191Z ^[[36;1melse^[[0m
+update	Commit	2026-10-11T11:02:52.7420640Z ^[[36;1m  git commit -m "chore: update best cf ips $(date -u +'%Y-%m-%d %H:%M UTC')"^[[0m
+update	Commit	2026-10-11T11:02:52.7421160Z ^[[36;1m  git push^[[0m
+update	Commit	2026-10-11T11:02:52.7421852Z ^[[36;1mfi^[[0m
+update	Commit	2026-10-11T11:02:52.7467152Z shell: /usr/bin/bash -e {0}
+update	Commit	2026-10-11T11:02:52.7467520Z env:
+update	Commit	2026-10-11T11:02:52.7467868Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+update	Commit	2026-10-11T11:02:52.7468419Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+update	Commit	2026-10-11T11:02:52.7468930Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+update	Commit	2026-10-11T11:02:52.7469544Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+update	Commit	2026-10-11T11:02:52.7469985Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+update	Commit	2026-10-11T11:02:52.7470445Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+update	Commit	2026-10-11T11:02:52.7470876Z ##[endgroup]
+update	Commit	2026-10-11T11:02:52.7808361Z [main 60446e8] chore: update best cf ips 2026-10-11 11:02 UTC
+update	Commit	2026-10-11T11:02:52.7809002Z  6 files changed, 610 insertions(+), 632 deletions(-)
+update	Commit	2026-10-11T11:02:53.2593271Z To https://github.com/lll33lll/best-cf-ips
+update	Commit	2026-10-11T11:02:53.2593895Z  ! [rejected]        main -> main (fetch first)
+update	Commit	2026-10-11T11:02:53.2594551Z error: failed to push some refs to 'https://github.com/lll33lll/best-cf-ips'
+update	Commit	2026-10-11T11:02:53.2605786Z hint: Updates were rejected because the remote contains work that you do not
+update	Commit	2026-10-11T11:02:53.2606835Z hint: have locally. This is usually caused by another repository pushing to
+update	Commit	2026-10-11T11:02:53.2607613Z hint: the same ref. If you want to integrate the remote changes, use
+update	Commit	2026-10-11T11:02:53.2608281Z hint: 'git pull' before pushing again.
+update	Commit	2026-10-11T11:02:53.2608955Z hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+update	Commit	2026-10-11T11:02:53.2623174Z ##[error]Process completed with exit code 1.
+=== job list ===
+
+X main Update Best CF IPs · 38134116706
+Triggered via workflow_dispatch about 1 minute ago
+
+JOBS
+X update in 20s (ID 114454361987)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Run actions/setup-python@v5
+  ✓ Install deps
+  ✓ Get week tag
+  ✓ Cache GeoLite2
+  ✓ Fetch GeoLite2
+  ✓ Collect
+  X Commit
+  - Post Cache GeoLite2
+  - Post Run actions/setup-python@v5
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@v4, actions/checkout@v4, actions/setup-python@v5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+update: .github#2
+
+X Process completed with exit code 1.
+update: .github#30
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+update: .github#1
+
+
+To see what failed, try: gh run view 38134116706 --log-failed
+View this run on GitHub: https://github.com/lll33lll/best-cf-ips/actions/runs/38134116706
