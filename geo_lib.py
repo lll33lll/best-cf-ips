@@ -41,6 +41,8 @@ NAME_TO_CC = {
 
 # 匹配行尾可能出现的裸两位大写码
 _CC_RE = re.compile(r"(?:^|\s)([A-Z]{2})(?:\s|$)")
+# 匹配 ip:port#CC 里的 #CC（LancelotRar 等源的输出格式，最标准）
+_HASH_CC_RE = re.compile(r"#([A-Za-z]{2})(?:\s|$)")
 
 # 会被误判成国家码的单位/杂项词，出现则排除
 _STOP_CC = {"MB", "KB", "GB", "TB", "MS", "IP", "CF", "OK", "NA", "ID"}
@@ -55,7 +57,7 @@ COLO_TO_CC = {
     "NKG": "CN", "FOC": "CN", "CSX": "CN", "KMG": "CN", "URC": "CN",
     "SHA": "CN", "SHE": "CN", "TAO": "CN", "DLC": "CN", "HAK": "CN",
     # 亚太
-    "NRT": "JP", "HND": "JP", "KIX": "JP", "ITM": "JP", "FUK": "JP",
+    "NRT": "JP", "HND": "JP", "KIX": "JP", "ITM": "JP", "FUK": "JP", "OKA": "JP",
     "ICN": "KR", "GMP": "KR", "PUS": "KR",
     "SIN": "SG", "BKK": "TH", "KUL": "MY", "CGK": "ID", "MNL": "PH",
     "HAN": "VN", "SGN": "VN", "BOM": "IN", "DEL": "IN", "MAA": "IN",
@@ -83,11 +85,18 @@ COLO_TO_CC = {
 
 
 def cc_from_text(text: str) -> str:
-    """从上游一行的注释/尾巴里猜国家码。优先级：Colo 三字码 > 地区名 > 裸两位码。"""
+    """从上游一行的注释/尾巴里猜国家码。
+
+    优先级：#CC 标准格式 > Colo 三字码 > 地区名 > 裸两位码。
+    """
     if not text:
         return ""
     up = text.upper()
-    # 1) Colo IATA 三字码（最准）
+    # 0) 标准 ip:port#CC 格式（源直接给了国家码，最可靠）
+    hm = _HASH_CC_RE.search(up)
+    if hm and hm.group(1) not in _STOP_CC:
+        return hm.group(1)
+    # 1) Colo IATA 三字码（次准）
     for code, cc in COLO_TO_CC.items():
         if re.search(rf"(?:^|[\s>]){code}(?:[\s<]|$)", up):
             return cc
