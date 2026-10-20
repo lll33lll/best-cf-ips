@@ -1,4 +1,4 @@
-# mirrored from LancelotRar/best-cf-ips at 2026-10-20 23:20
+# mirrored from LancelotRar/best-cf-ips at 2026-10-21 03:32
 # 100 best cf ips scanned at 2026-10-20 23:19
 8.39.125.220:443#SG 🇸🇬
 172.64.154.157:443#SG 🇸🇬
