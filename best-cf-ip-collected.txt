@@ -1,4 +1,4 @@
-# mirrored from LancelotRar/best-cf-ips at 2026-10-22 18:32
+# mirrored from LancelotRar/best-cf-ips at 2026-10-22 23:34
 # 67 best ips collected at 2026-10-22 17:42
 104.16.65.1:443#US 🇺🇸
 104.16.105.166:443#US 🇺🇸
